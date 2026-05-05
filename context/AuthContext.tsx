@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { User, UserRole, AuthState } from "@/types";
-import { loginUser, registerUser } from "@/services/mockServices";
+import { loginUser, registerClient, registerProvider } from '@/services/api-services';
 
 type AuthAction =
   | { type: "LOGIN_START" }
@@ -47,7 +47,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string, role: UserRole) => Promise<boolean>;
-  register: (userData: Partial<User>) => Promise<boolean>;
+  register: (userData: Partial<User>, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -57,20 +57,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   const login = useCallback(
-    async (
-      email: string,
-      password: string,
-      role: UserRole
-    ): Promise<boolean> => {
+    async (email: string, password: string, role: UserRole): Promise<boolean> => {
       dispatch({ type: "LOGIN_START" });
       try {
-        const user = await loginUser(
-          email,
-          password,
-          role as "client" | "provider"
-        );
-        if (user) {
-          dispatch({ type: "LOGIN_SUCCESS", payload: user });
+        const response = await loginUser(email, password, role as "client" | "provider");
+        if (response?.user) {
+          localStorage.setItem("authToken", response.token);
+          dispatch({ type: "LOGIN_SUCCESS", payload: response.user });
           return true;
         }
         dispatch({ type: "LOGIN_FAILURE" });
@@ -83,11 +76,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const register = useCallback(async (userData: Partial<User>): Promise<boolean> => {
+  const register = useCallback(async (userData: Partial<User>, password: string): Promise<boolean> => {
     dispatch({ type: "LOGIN_START" });
     try {
-      const user = await registerUser(userData);
-      dispatch({ type: "LOGIN_SUCCESS", payload: user });
+      let response: { token: string; user: User };
+
+      if (userData.role === "provider") {
+        response = await registerProvider({
+          email: userData.email!,
+          password,                          //viene del parámetro
+          nombreComercial: userData.businessName!,
+          direccion: userData.address!,   // ver nota abajo
+          telefonoContacto: userData.phone!,
+        });
+      } else {
+        response = await registerClient({
+          email: userData.email!,
+          password,                          //viene del parámetro
+          nombre: userData.name!,
+          telefono: userData.phone!,
+        });
+      }
+
+      localStorage.setItem("authToken", response.token);
+      dispatch({ type: "LOGIN_SUCCESS", payload: response.user });
       return true;
     } catch {
       dispatch({ type: "LOGIN_FAILURE" });
@@ -96,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    localStorage.removeItem("authToken");
     dispatch({ type: "LOGOUT" });
   }, []);
 

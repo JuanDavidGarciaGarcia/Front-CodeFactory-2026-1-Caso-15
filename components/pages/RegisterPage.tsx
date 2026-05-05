@@ -66,6 +66,7 @@ export function RegisterPage() {
     lastName: "",
     email: "",
     phone: "",
+    address: "",
     documentId: "",
     password: "",
     confirmPassword: "",
@@ -78,27 +79,28 @@ export function RegisterPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      return;
-    }
-    setIsLoading(true);
+  e.preventDefault();
+  if (formData.password !== formData.confirmPassword) return;
 
-    const success = await register({
+  setIsLoading(true);
+
+  const success = await register(
+    {
       email: formData.email,
       name: formData.firstName,
       lastName: formData.lastName,
       phone: formData.phone,
+      address: formData.address,
       businessName: accountType === "provider" ? formData.businessName : undefined,
       documentId: accountType === "client" ? formData.documentId : undefined,
       role: accountType,
-    });
+    },
+    formData.password   //segundo parámetro
+  );
 
-    if (success) {
-      router.push("/dashboard");
-    }
-    setIsLoading(false);
-  };
+  if (success) router.push("/dashboard");
+  setIsLoading(false);
+};
 
   return (
     <div className="flex-1 flex flex-col px-6 py-8 lg:px-12">
@@ -225,6 +227,20 @@ export function RegisterPage() {
                       type="tel"
                       placeholder="+57 300 123 4567"
                       value={formData.phone}
+                      onChange={handleChange}
+                      className="h-11 rounded-lg"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Dirección
+                    </Label>
+                    <Input
+                      name="address"
+                      placeholder="Calle 123 #45-67, Medellín"
+                      value={formData.address}
                       onChange={handleChange}
                       className="h-11 rounded-lg"
                       required

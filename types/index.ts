@@ -9,6 +9,7 @@ export interface User {
   phone?: string;
   businessName?: string;
   documentId?: string;
+  address?: string;
   avatar?: string;
 }
 
