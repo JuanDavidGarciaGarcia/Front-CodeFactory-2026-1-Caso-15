@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ReservaFácil Brand Colors */
+  --primary-green: #1B4332;
+  --secondary-green: #2D6A4F;
+  --accent-green: #22543D;
+  --selected-green: #276749;
+  --success: #22C55E;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  
+  /* Sidebar */
+  --sidebar-bg: #1A2B4A;
+  
+  /* Base Colors */
+  --background: #F1F5F9;
+  --foreground: #1E293B;
+  --card: #FFFFFF;
+  --card-foreground: #1E293B;
+  --popover: #FFFFFF;
+  --popover-foreground: #1E293B;
+  --primary: #1B4332;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F0FDF4;
+  --secondary-foreground: #276749;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #F0FDF4;
+  --accent-foreground: #276749;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #276749;
+  --radius: 0.625rem;
+  
+  /* Feature Icon Colors */
+  --feature-blue: #3B82F6;
+  --feature-yellow: #F59E0B;
+  --feature-red: #EF4444;
+  --feature-purple: #8B5CF6;
+  --feature-pink: #EC4899;
+}
+
+@theme inline {
+  --font-sans: 'Inter', 'Inter Fallback', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Custom colors */
+  --color-primary-green: var(--primary-green);
+  --color-secondary-green: var(--secondary-green);
+  --color-accent-green: var(--accent-green);
+  --color-selected-green: var(--selected-green);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-feature-blue: var(--feature-blue);
+  --color-feature-yellow: var(--feature-yellow);
+  --color-feature-red: var(--feature-red);
+  --color-feature-purple: var(--feature-purple);
+  --color-feature-pink: var(--feature-pink);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
