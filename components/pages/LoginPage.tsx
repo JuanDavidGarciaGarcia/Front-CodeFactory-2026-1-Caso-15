@@ -26,7 +26,7 @@ export function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const success = await login(email, password, selectedRole);
+    const success = await login(email, password);
     if (success) {
       router.push("/dashboard");
     }

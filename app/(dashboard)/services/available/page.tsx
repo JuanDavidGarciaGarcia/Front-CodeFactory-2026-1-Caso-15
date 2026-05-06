@@ -57,7 +57,7 @@ export default function AvailableServicesPage() {
   const activeServices = services.filter((s) => s.isActive);
 
   const filteredServices = activeServices.filter((service) => {
-    const matchesSearch = service.name
+    const matchesSearch = (service.name ?? "")
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesCategory =

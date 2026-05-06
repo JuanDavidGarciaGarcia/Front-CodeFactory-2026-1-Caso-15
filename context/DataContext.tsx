@@ -9,14 +9,14 @@ import {
 } from "react";
 import type { Category, Service, Booking, DataState } from "@/types";
 import {
-  getCategories as fetchCategories,
-  getServices as fetchServices,
+  getActiveCategories,
+  getActiveServices,
   getBookings as fetchBookings,
   createCategory as apiCreateCategory,
   updateCategory as apiUpdateCategory,
   createService as apiCreateService,
   updateService as apiUpdateService,
-} from "@/services/mockServices";
+} from "@/services/api-services";
 
 type DataAction =
   | { type: "SET_LOADING"; payload: boolean }
@@ -37,6 +37,49 @@ const initialState: DataState = {
   bookings: [],
   isLoading: false,
 };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapCategory(cat: any): Category {
+  return {
+    id: String(cat.id ?? cat.idCategoria ?? ""),
+    name: cat.nombreCategoria ?? cat.nombre ?? cat.name ?? "",
+    description: cat.descripcion ?? cat.description ?? "",
+    icon: cat.icono ?? cat.icon ?? "grid",
+    accentColor: cat.color ?? cat.accentColor ?? "#22543D",
+    isActive: cat.activa ?? cat.activo ?? cat.isActive ?? true,
+    createdAt: cat.fechaCreacion ?? cat.createdAt ?? "",
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapService(svc: any): Service {
+  return {
+    id: String(svc.id ?? svc.idServicio ?? ""),
+    name: svc.nombre ?? svc.name ?? "",
+    description: svc.descripcion ?? svc.description ?? "",
+    categoryId: String(svc.idCategoria ?? svc.categoryId ?? ""),
+    providerId: String(svc.idProveedor ?? svc.providerId ?? ""),
+    price: svc.precio ?? svc.price ?? 0,
+    duration: svc.duracion ?? svc.duration ?? 60,
+    modality: svc.modalidad ?? svc.modality ?? "presencial",
+    image: svc.imagen ?? svc.image,
+    isActive: svc.activo ?? svc.isActive ?? true,
+    createdAt: svc.fechaCreacion ?? svc.createdAt ?? "",
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapBooking(b: any): Booking {
+  return {
+    id: String(b.id ?? b.idReserva),
+    serviceId: String(b.idServicio ?? b.serviceId),
+    clientId: String(b.idCliente ?? b.clientId),
+    providerId: String(b.idProveedor ?? b.providerId),
+    date: b.fecha ?? b.date ?? "",
+    time: b.hora ?? b.time ?? "",
+    status: b.estado ?? b.status ?? "pending",
+    createdAt: b.fechaCreacion ?? b.createdAt ?? "",
+  };
+}
 
 function dataReducer(state: DataState, action: DataAction): DataState {
   switch (action.type) {
@@ -115,20 +158,36 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const loadCategories = useCallback(async () => {
     dispatch({ type: "SET_LOADING", payload: true });
-    const categories = await fetchCategories();
-    dispatch({ type: "SET_CATEGORIES", payload: categories });
+    try {
+      const data = await getActiveCategories();
+      const categories = Array.isArray(data) ? data.map(mapCategory) : [];
+      dispatch({ type: "SET_CATEGORIES", payload: categories });
+    } catch {
+      dispatch({ type: "SET_CATEGORIES", payload: [] });
+    }
   }, []);
 
   const loadServices = useCallback(async () => {
     dispatch({ type: "SET_LOADING", payload: true });
-    const services = await fetchServices();
-    dispatch({ type: "SET_SERVICES", payload: services });
+    try {
+      const data = await getActiveServices();
+      console.log("Services from backend:", data); // temporal
+      const services = Array.isArray(data) ? data.map(mapService) : [];
+      dispatch({ type: "SET_SERVICES", payload: services });
+    } catch {
+      dispatch({ type: "SET_SERVICES", payload: [] });
+    }
   }, []);
 
   const loadBookings = useCallback(async () => {
     dispatch({ type: "SET_LOADING", payload: true });
-    const bookings = await fetchBookings();
-    dispatch({ type: "SET_BOOKINGS", payload: bookings });
+    try {
+      const data = await fetchBookings();
+      const bookings = Array.isArray(data) ? data.map(mapBooking) : [];
+      dispatch({ type: "SET_BOOKINGS", payload: bookings });
+    } catch {
+      dispatch({ type: "SET_BOOKINGS", payload: [] });
+    }
   }, []);
 
   const addCategory = useCallback(
@@ -154,22 +213,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addService = useCallback(
-    async (service: Omit<Service, "id" | "createdAt">) => {
-      const newService = await apiCreateService(service);
-      dispatch({ type: "ADD_SERVICE", payload: newService });
-    },
-    []
-  );
+  async (service: Omit<Service, "id" | "createdAt">) => {
+    const backendData = {
+      nombreServicio: service.name,
+      descripcion: service.description,
+      idCategoria: service.categoryId,
+      precio: service.price,
+      duracionMinutos: service.duration,
+      modalidad: service.modality.toUpperCase(),
+      capacidadMaxima: 10, // valor por defecto
+      activo: service.isActive,
+    };
+    const newService = await apiCreateService(backendData);
+    dispatch({ type: "ADD_SERVICE", payload: mapService(newService) });
+  },
+  []
+);
 
   const editService = useCallback(
-    async (id: string, updates: Partial<Service>) => {
-      const updated = await apiUpdateService(id, updates);
-      if (updated) {
-        dispatch({ type: "UPDATE_SERVICE", payload: updated });
-      }
-    },
-    []
-  );
+  async (id: string, updates: Partial<Service>) => {
+    const backendData = {
+      nombreServicio: updates.name,
+      descripcion: updates.description,
+      idCategoria: updates.categoryId,
+      precio: updates.price,
+      duracionMinutos: updates.duration,
+      modalidad: updates.modality?.toUpperCase(),
+      capacidadMaxima: 10,
+    };
+    const updated = await apiUpdateService(id, backendData);
+    if (updated) {
+      dispatch({ type: "UPDATE_SERVICE", payload: mapService(updated) });
+    }
+  },
+  []
+);
 
   const toggleService = useCallback((id: string) => {
     dispatch({ type: "TOGGLE_SERVICE", payload: id });

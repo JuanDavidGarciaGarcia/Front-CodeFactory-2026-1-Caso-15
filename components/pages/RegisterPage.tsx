@@ -7,12 +7,6 @@ import {
   Building2,
   Eye,
   EyeOff,
-  Heart,
-  Sparkles,
-  Dumbbell,
-  Briefcase,
-  BookOpen,
-  Grid3X3,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -21,17 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import { useData } from "@/context/DataContext";
+import { useEffect } from "react";
 
 type AccountType = "client" | "provider";
-
-const serviceCategories = [
-  { id: "health", label: "Salud y médico", icon: Heart },
-  { id: "beauty", label: "Belleza y spa", icon: Sparkles },
-  { id: "fitness", label: "Deportes y fitness", icon: Dumbbell },
-  { id: "consulting", label: "Consultoría", icon: Briefcase },
-  { id: "education", label: "Educación", icon: BookOpen },
-  { id: "other", label: "Otro", icon: Grid3X3 },
-];
 
 function getPasswordStrength(password: string): {
   score: number;
@@ -78,29 +65,36 @@ export function RegisterPage() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const { categories, loadCategories } = useData();
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (formData.password !== formData.confirmPassword) return;
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) return;
 
-  setIsLoading(true);
+    setIsLoading(true);
 
-  const success = await register(
-    {
-      email: formData.email,
-      name: formData.firstName,
-      lastName: formData.lastName,
-      phone: formData.phone,
-      address: formData.address,
-      businessName: accountType === "provider" ? formData.businessName : undefined,
-      documentId: accountType === "client" ? formData.documentId : undefined,
-      role: accountType,
-    },
-    formData.password   //segundo parámetro
-  );
+    const success = await register(
+      {
+        email: formData.email,
+        name: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        address: formData.address,
+        businessName: accountType === "provider" ? formData.businessName : undefined,
+        documentId: accountType === "client" ? formData.documentId : undefined,
+        role: accountType,
+        categoryId: selectedCategory,
+      },
+      formData.password   //segundo parámetro
+    );
 
-  if (success) router.push("/dashboard");
-  setIsLoading(false);
-};
+    if (success) router.push("/dashboard");
+    setIsLoading(false);
+  };
 
   return (
     <div className="flex-1 flex flex-col px-6 py-8 lg:px-12">
@@ -248,31 +242,32 @@ export function RegisterPage() {
                   </div>
 
                   {/* Service Category */}
+                  {/* Service Category */}
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Categoría de servicios
                     </Label>
                     <div className="grid grid-cols-2 gap-2">
-                      {serviceCategories.map((cat) => {
-                        const Icon = cat.icon;
-                        const isSelected = selectedCategory === cat.id;
-                        return (
-                          <button
-                            key={cat.id}
-                            type="button"
-                            onClick={() => setSelectedCategory(cat.id)}
-                            className={cn(
-                              "flex items-center gap-2 px-3 py-2.5 rounded-lg border transition-all text-sm",
-                              isSelected
-                                ? "border-selected-green bg-selected-green text-white"
-                                : "border-border bg-secondary/50 text-foreground hover:border-muted-foreground/30"
-                            )}
-                          >
-                            <Icon className="h-4 w-4" />
-                            <span className="truncate">{cat.label}</span>
-                          </button>
-                        );
-                      })}
+                      {categories
+                        .filter((c) => c.isActive)
+                        .map((cat) => {
+                          const isSelected = selectedCategory === cat.id;
+                          return (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => setSelectedCategory(cat.id)}
+                              className={cn(
+                                "flex items-center gap-2 px-3 py-2.5 rounded-lg border transition-all text-sm",
+                                isSelected
+                                  ? "border-selected-green bg-selected-green text-white"
+                                  : "border-border bg-secondary/50 text-foreground hover:border-muted-foreground/30"
+                              )}
+                            >
+                              <span className="truncate">{cat.name}</span>
+                            </button>
+                          );
+                        })}
                     </div>
                   </div>
                 </>

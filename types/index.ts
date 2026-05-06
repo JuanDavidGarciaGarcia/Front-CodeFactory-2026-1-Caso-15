@@ -10,6 +10,7 @@ export interface User {
   businessName?: string;
   documentId?: string;
   address?: string;
+  categoryId?: string;
   avatar?: string;
 }
 

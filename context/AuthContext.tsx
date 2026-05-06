@@ -7,7 +7,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import type { User, UserRole, AuthState } from "@/types";
+import type { User, AuthState } from "@/types";
 import { loginUser, registerClient, registerProvider } from '@/services/api-services';
 
 type AuthAction =
@@ -45,8 +45,23 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
   }
 }
 
+// Mapea la respuesta del backend al tipo User del frontend
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapBackendUser(backendUser: any): User {
+  return {
+    id: String(backendUser.idUsuario ?? backendUser.userId ?? backendUser.id ?? ""),
+    email: backendUser.email,
+    name: backendUser.nombre ?? backendUser.nombreComercial ?? backendUser.email?.split("@")[0] ?? "",
+    lastName: backendUser.apellido ?? "",
+    role: backendUser.tipoUsuario === "PROVEEDOR" || backendUser.role === "PROVEEDOR" ? "provider" : "client",
+    phone: backendUser.telefono ?? backendUser.telefonoContacto,
+    businessName: backendUser.nombreComercial,
+    categoryId: backendUser.idCategoria,
+  };
+}
+
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string, role: UserRole) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   register: (userData: Partial<User>, password: string) => Promise<boolean>;
   logout: () => void;
 }
@@ -57,13 +72,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   const login = useCallback(
-    async (email: string, password: string, role: UserRole): Promise<boolean> => {
+    async (email: string, password: string): Promise<boolean> => {
       dispatch({ type: "LOGIN_START" });
       try {
-        const response = await loginUser(email, password, role as "client" | "provider");
-        if (response?.user) {
-          localStorage.setItem("authToken", response.token);
-          dispatch({ type: "LOGIN_SUCCESS", payload: response.user });
+        const response = await loginUser(email, password);
+        if (response?.accessToken) {
+          localStorage.setItem("authToken", response.accessToken);
+          localStorage.setItem("refreshToken", response.refreshToken);
+          // El backend devuelve los datos directamente, no dentro de .user
+          const user = mapBackendUser({
+            idUsuario: response.userId,
+            email: response.email,
+            tipoUsuario: response.role,
+          });
+          dispatch({ type: "LOGIN_SUCCESS", payload: user });
           return true;
         }
         dispatch({ type: "LOGIN_FAILURE" });
@@ -79,27 +101,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (userData: Partial<User>, password: string): Promise<boolean> => {
     dispatch({ type: "LOGIN_START" });
     try {
-      let response: { token: string; user: User };
+      let response: { token: string; user: any };
 
       if (userData.role === "provider") {
         response = await registerProvider({
           email: userData.email!,
-          password,                          //viene del parámetro
+          password,
           nombreComercial: userData.businessName!,
-          direccion: userData.address!,   // ver nota abajo
+          direccion: userData.address!,
           telefonoContacto: userData.phone!,
+          idCategoria: userData.categoryId!,
         });
       } else {
         response = await registerClient({
           email: userData.email!,
-          password,                          //viene del parámetro
+          password,
           nombre: userData.name!,
           telefono: userData.phone!,
         });
       }
 
       localStorage.setItem("authToken", response.token);
-      dispatch({ type: "LOGIN_SUCCESS", payload: response.user });
+      dispatch({ type: "LOGIN_SUCCESS", payload: mapBackendUser(response.user) });
       return true;
     } catch {
       dispatch({ type: "LOGIN_FAILURE" });

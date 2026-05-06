@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Calendar, Clock, MapPin, Monitor } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -23,6 +24,7 @@ const itemVariants = {
 };
 
 export default function MyBookingsPage() {
+  const router = useRouter();
   const { bookings, services, categories, loadBookings, loadServices, loadCategories } =
     useData();
 
@@ -50,16 +52,11 @@ export default function MyBookingsPage() {
 
   const getStatusForBadge = (status: string) => {
     switch (status) {
-      case "pending":
-        return "pending";
-      case "confirmed":
-        return "confirmed";
-      case "completed":
-        return "completed";
-      case "cancelled":
-        return "cancelled";
-      default:
-        return "inactive";
+      case "pending": return "pending";
+      case "confirmed": return "confirmed";
+      case "completed": return "completed";
+      case "cancelled": return "cancelled";
+      default: return "inactive";
     }
   };
 
@@ -72,7 +69,7 @@ export default function MyBookingsPage() {
             title="Sin reservas"
             description="Aún no tienes reservas. Explora los servicios disponibles para hacer tu primera reserva."
             actionLabel="Ver servicios"
-            onAction={() => (window.location.href = "/services/available")}
+            onAction={() => router.push("/services/available")}
           />
         ) : (
           <motion.div
@@ -83,25 +80,17 @@ export default function MyBookingsPage() {
           >
             {bookings.map((booking) => {
               const service = getServiceById(booking.serviceId);
-              const category = service
-                ? getCategoryById(service.categoryId)
-                : null;
+              const category = service ? getCategoryById(service.categoryId) : null;
 
               return (
                 <motion.div key={booking.id} variants={itemVariants}>
                   <Card className="overflow-hidden">
                     <CardContent className="p-0">
                       <div className="flex flex-col sm:flex-row">
-                        {/* Color Bar */}
                         <div
                           className="h-2 sm:h-auto sm:w-2"
-                          style={{
-                            backgroundColor:
-                              category?.accentColor || "#22543D",
-                          }}
+                          style={{ backgroundColor: category?.accentColor || "#22543D" }}
                         />
-
-                        {/* Content */}
                         <div className="flex-1 p-4 sm:p-6">
                           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                             <div className="space-y-2">
@@ -109,22 +98,16 @@ export default function MyBookingsPage() {
                                 <h3 className="font-semibold text-foreground">
                                   {service?.name || "Servicio"}
                                 </h3>
-                                <StatusBadge
-                                  status={getStatusForBadge(booking.status)}
-                                />
+                                <StatusBadge status={getStatusForBadge(booking.status)} />
                               </div>
-
                               {category && (
                                 <span
                                   className="inline-block text-xs px-2 py-0.5 rounded-full text-white"
-                                  style={{
-                                    backgroundColor: category.accentColor,
-                                  }}
+                                  style={{ backgroundColor: category.accentColor }}
                                 >
                                   {category.name}
                                 </span>
                               )}
-
                               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-3">
                                 <span className="flex items-center gap-1.5">
                                   <Calendar className="h-4 w-4" />
@@ -141,19 +124,14 @@ export default function MyBookingsPage() {
                                     ) : (
                                       <Monitor className="h-4 w-4" />
                                     )}
-                                    {service.modality === "presencial"
-                                      ? "Presencial"
-                                      : "Virtual"}
+                                    {service.modality === "presencial" ? "Presencial" : "Virtual"}
                                   </span>
                                 )}
                               </div>
                             </div>
-
                             {service && (
                               <div className="text-right">
-                                <p className="text-sm text-muted-foreground">
-                                  Total
-                                </p>
+                                <p className="text-sm text-muted-foreground">Total</p>
                                 <p className="text-xl font-bold text-foreground">
                                   {formatPrice(service.price)}
                                 </p>
